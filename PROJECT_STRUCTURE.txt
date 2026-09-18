@@ -1,0 +1,104 @@
+艾伦方差分析工具 - 项目结构
+========================================
+
+📁 allan_variance_tool/
+├── 📄 allan_variance_gui.py          # 主程序（GUI版本）
+├── 📄 requirements.txt                # Python依赖包列表
+├── 📄 build_spec.py                  # PyInstaller打包配置
+│
+├── 🍎 macOS 打包脚本/
+│   ├── build_mac_complete.sh         # macOS完整打包（一键执行）
+│   └── create_dmg.sh                 # 创建DMG安装包
+│
+├── 🪟 Windows 打包脚本/
+│   ├── build_windows_complete.bat    # Windows完整打包（带安装程序）
+│   ├── build_windows_portable.bat    # Windows便携版打包
+│   └── installer.iss                 # Inno Setup安装程序配置
+│
+├── 🔧 工具脚本/
+│   ├── create_icon.py                # 图标生成工具
+│   ├── project_info.sh               # 项目信息查看（macOS）
+│   └── project_info.bat              # 项目信息查看（Windows）
+│
+├── 📖 文档/
+│   ├── README.md                     # 完整项目文档
+│   ├── QUICKSTART.md                 # 快速开始指南
+│   └── PROJECT_STRUCTURE.txt         # 本文件
+│
+└── 📝 其他/
+    └── .gitignore                    # Git忽略文件配置
+
+========================================
+🎯 核心文件说明
+========================================
+
+【allan_variance_gui.py】
+- 主程序入口
+- 包含GUI界面和所有计算逻辑
+- 支持CO2/CH4数据的艾伦方差分析
+- 自动保存结果到桌面
+
+【requirements.txt】
+- numpy 1.24.3      # 数值计算
+- pandas 2.0.3      # 数据处理
+- openpyxl 3.1.2    # Excel文件操作
+- matplotlib 3.7.2  # 图表绘制
+- Pillow 10.0.0     # 图像处理
+
+【build_spec.py】
+- PyInstaller配置文件
+- 定义打包参数和依赖项
+- 适配macOS和Windows平台
+
+========================================
+🚀 使用流程
+========================================
+
+【开发者】
+1. 开发测试
+   └─ python allan_variance_gui.py
+
+2. 打包应用
+   ├─ macOS: ./build_mac_complete.sh
+   └─ Windows: build_windows_complete.bat
+
+3. 分发应用
+   ├─ macOS: dist/艾伦方差分析工具_v1.0.0.dmg
+   └─ Windows: dist/艾伦方差分析工具_v1.0.0_Setup.exe
+
+【最终用户】
+1. 安装应用
+   ├─ macOS: 打开DMG → 拖到Applications
+   └─ Windows: 双击Setup.exe安装
+
+2. 使用应用
+   ├─ 选择数据文件（CO2/CH4）
+   ├─ 点击"开始分析"
+   └─ 结果自动保存到桌面
+
+========================================
+📊 输出文件
+========================================
+
+【分析结果】
+文件名: 艾伦方差分析结果_时间戳.xlsx
+位置: 用户桌面
+
+包含的Sheet:
+├─ CO2_原始数据           # CO2原始数据
+├─ CO2_艾伦偏差结果       # CO2分析结果
+├─ CH4_原始数据           # CH4原始数据
+├─ CH4_艾伦偏差结果       # CH4分析结果
+└─ 图表                   # 艾伦偏差折线图
+
+========================================
+✅ 项目特点
+========================================
+
+✨ 跨平台支持       # macOS + Windows
+✨ GUI友好界面      # 无需命令行操作
+✨ 自动化处理       # 一键分析，结果自动保存
+✨ 完整文档         # 用户和开发者文档齐全
+✨ 独立运行         # 无需Python环境
+
+========================================

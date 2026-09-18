@@ -346,81 +346,304 @@ class AllanVarianceApp:
     def __init__(self, root):
         self.root = root
         self.root.title("艾伦方差分析工具")
-        self.root.geometry("600x400")
+        self.root.geometry("700x650")
+        self.root.resizable(False, False)
+
+        # 配色方案 - 浅色主题，清新专业风格
+        self.colors = {
+            'bg_primary': '#FFFFFF',      # 主背景 - 白色
+            'bg_secondary': '#F8FAFC',    # 次级背景 - 浅灰
+            'bg_card': '#FFFFFF',         # 卡片背景
+            'accent': '#38BDF8',          # 强调色 - 青蓝
+            'accent_hover': '#0EA5E9',    # 悬停色
+            'text_primary': '#0F172A',    # 主文字 - 深色
+            'text_secondary': '#475569',  # 次要文字
+            'text_muted': '#94A3B8',      # 弱化文字
+            'border': '#E2E8F0',          # 边框 - 浅灰
+            'success': '#10B981',         # 成功色 - 绿色
+            'error': '#EF4444',           # 错误色 - 红色
+            'co2_color': '#10B981',       # CO2 - 绿色
+            'co2_hover': '#059669',       # CO2 悬停
+            'ch4_color': '#EF4444',       # CH4 - 红色
+            'ch4_hover': '#DC2626',       # CH4 悬停
+        }
 
         # 文件路径变量
         self.co2_path = tk.StringVar()
         self.ch4_path = tk.StringVar()
 
+        # 按钮引用
+        self.co2_btn = None
+        self.ch4_btn = None
+
+        # 进度追踪
+        self.current_step = 0
+        self.total_steps = 0
+        self.step_names = []
+
+        # Loading 动画
+        self.loading_canvas = None
+        self.loading_angle = 0
+        self.loading_animation_id = None
+
+        self.setup_styles()
         self.create_widgets()
 
+    def setup_styles(self):
+        """配置 ttk 样式"""
+        style = ttk.Style()
+
+        # 进度条样式
+        style.theme_use('default')
+        style.configure(
+            "Custom.Horizontal.TProgressbar",
+            troughcolor=self.colors['bg_secondary'],
+            background=self.colors['accent'],
+            bordercolor=self.colors['border'],
+            lightcolor=self.colors['accent'],
+            darkcolor=self.colors['accent']
+        )
+
     def create_widgets(self):
-        # 标题
+        # 设置主窗口背景
+        self.root.configure(bg=self.colors['bg_primary'])
+
+        # 主容器
+        main_container = tk.Frame(self.root, bg=self.colors['bg_primary'])
+        main_container.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+
+        # 标题区域
+        title_frame = tk.Frame(main_container, bg=self.colors['bg_primary'])
+        title_frame.pack(fill=tk.X, pady=(0, 30))
+
         title = tk.Label(
-            self.root,
+            title_frame,
             text="艾伦方差分析工具",
-            font=("Arial", 16, "bold")
+            font=("PingFang SC", 24, "bold"),
+            bg=self.colors['bg_primary'],
+            fg=self.colors['text_primary']
         )
-        title.pack(pady=20)
+        title.pack()
 
-        # CO2 文件选择
-        co2_frame = tk.Frame(self.root)
-        co2_frame.pack(fill=tk.X, padx=20, pady=10)
-
-        tk.Label(co2_frame, text="CO2 数据文件:", width=15, anchor="w").pack(side=tk.LEFT)
-        tk.Entry(co2_frame, textvariable=self.co2_path, width=35).pack(side=tk.LEFT, padx=5)
-        tk.Button(co2_frame, text="选择文件", command=self.select_co2).pack(side=tk.LEFT)
-
-        # CH4 文件选择
-        ch4_frame = tk.Frame(self.root)
-        ch4_frame.pack(fill=tk.X, padx=20, pady=10)
-
-        tk.Label(ch4_frame, text="CH4 数据文件:", width=15, anchor="w").pack(side=tk.LEFT)
-        tk.Entry(ch4_frame, textvariable=self.ch4_path, width=35).pack(side=tk.LEFT, padx=5)
-        tk.Button(ch4_frame, text="选择文件", command=self.select_ch4).pack(side=tk.LEFT)
-
-        # 说明文字
-        info_text = (
-            "说明：\n"
-            "• 至少选择一个气体的数据文件（CO2 或 CH4）\n"
-            "• 数据格式：制表符分隔的两列（时间戳 浓度）\n"
-            "• 结果将自动保存到桌面"
+        subtitle = tk.Label(
+            title_frame,
+            text="Allan Variance Analysis Tool",
+            font=("Arial", 11),
+            bg=self.colors['bg_primary'],
+            fg=self.colors['text_secondary']
         )
-        info_label = tk.Label(
-            self.root,
-            text=info_text,
-            justify=tk.LEFT,
-            fg="gray"
+        subtitle.pack(pady=(5, 0))
+
+        # 文件选择区域 - CO2
+        self.co2_btn = self.create_file_selector(
+            main_container,
+            "CO2 数据文件",
+            "二氧化碳浓度数据",
+            self.co2_path,
+            self.select_co2,
+            self.colors['co2_color'],
+            self.colors['co2_hover']
         )
-        info_label.pack(pady=20)
+
+        # 文件选择区域 - CH4
+        self.ch4_btn = self.create_file_selector(
+            main_container,
+            "CH4 数据文件",
+            "甲烷浓度数据",
+            self.ch4_path,
+            self.select_ch4,
+            self.colors['ch4_color'],
+            self.colors['ch4_hover']
+        )
+
+        # 说明卡片
+        info_card = tk.Frame(
+            main_container,
+            bg=self.colors['bg_card'],
+            highlightbackground=self.colors['border'],
+            highlightthickness=1
+        )
+        info_card.pack(fill=tk.X, pady=(20, 0))
+
+        info_inner = tk.Frame(info_card, bg=self.colors['bg_card'])
+        info_inner.pack(padx=20, pady=15)
+
+        info_title = tk.Label(
+            info_inner,
+            text="📋 使用说明",
+            font=("PingFang SC", 12, "bold"),
+            bg=self.colors['bg_card'],
+            fg=self.colors['text_primary'],
+            anchor="w"
+        )
+        info_title.pack(anchor="w", pady=(0, 10))
+
+        info_items = [
+            "• 至少选择一个气体的数据文件（CO2 或 CH4）",
+            "• 数据格式：制表符分隔的两列（时间戳 \\t 浓度值）",
+            "• 支持时间格式：YYYY-MM-DD HH:MM:SS",
+            "• 分析结果将自动保存到桌面（Excel + 图表）"
+        ]
+
+        for item in info_items:
+            item_label = tk.Label(
+                info_inner,
+                text=item,
+                font=("PingFang SC", 10),
+                bg=self.colors['bg_card'],
+                fg=self.colors['text_secondary'],
+                anchor="w",
+                justify=tk.LEFT
+            )
+            item_label.pack(anchor="w", pady=2)
 
         # 开始分析按钮
+        btn_container = tk.Frame(main_container, bg=self.colors['bg_primary'])
+        btn_container.pack(pady=(25, 0))
+
         self.start_btn = tk.Button(
-            self.root,
+            btn_container,
             text="开始分析",
             command=self.start_analysis,
-            bg="#4CAF50",
-            fg="white",
-            font=("Arial", 12, "bold"),
-            padx=30,
-            pady=10
+            bg=self.colors['accent'],
+            fg='white',
+            font=("PingFang SC", 13, "bold"),
+            activebackground=self.colors['accent_hover'],
+            activeforeground='white',
+            relief=tk.FLAT,
+            cursor="hand2",
+            padx=40,
+            pady=12,
+            borderwidth=0
         )
-        self.start_btn.pack(pady=20)
+        self.start_btn.pack()
 
-        # 进度条
-        self.progress = ttk.Progressbar(
-            self.root,
-            mode='indeterminate',
-            length=400
+        # 添加按钮悬停效果
+        self.start_btn.bind("<Enter>", lambda e: self.start_btn.config(bg=self.colors['accent_hover']))
+        self.start_btn.bind("<Leave>", lambda e: self.start_btn.config(bg=self.colors['accent']))
+
+        # 进度区域
+        self.progress_container = tk.Frame(main_container, bg=self.colors['bg_primary'])
+
+        # Loading 动画 Canvas
+        self.loading_canvas = tk.Canvas(
+            self.progress_container,
+            width=80,
+            height=80,
+            bg=self.colors['bg_primary'],
+            highlightthickness=0
         )
+        self.loading_canvas.pack(pady=(0, 15))
+
+        # 进度文本
+        self.progress_text = tk.Label(
+            self.progress_container,
+            text="",
+            font=("PingFang SC", 12, "bold"),
+            bg=self.colors['bg_primary'],
+            fg=self.colors['accent']
+        )
+        self.progress_text.pack(pady=(0, 5))
 
         # 状态标签
         self.status_label = tk.Label(
-            self.root,
+            main_container,
             text="",
-            fg="blue"
+            font=("PingFang SC", 10),
+            bg=self.colors['bg_primary'],
+            fg=self.colors['text_secondary'],
+            wraplength=640,
+            justify=tk.CENTER
         )
-        self.status_label.pack(pady=10)
+        self.status_label.pack(pady=(10, 0))
+
+    def create_file_selector(self, parent, label_text, description, var, command, color, hover_color):
+        """创建文件选择器组件"""
+        card = tk.Frame(
+            parent,
+            bg=self.colors['bg_card'],
+            highlightbackground=self.colors['border'],
+            highlightthickness=1
+        )
+        card.pack(fill=tk.X, pady=(0, 15))
+
+        inner = tk.Frame(card, bg=self.colors['bg_card'])
+        inner.pack(padx=20, pady=15, fill=tk.X)
+
+        # 标题行
+        title_row = tk.Frame(inner, bg=self.colors['bg_card'])
+        title_row.pack(fill=tk.X, pady=(0, 8))
+
+        # 颜色指示器
+        indicator = tk.Frame(
+            title_row,
+            bg=color,
+            width=4,
+            height=16
+        )
+        indicator.pack(side=tk.LEFT, padx=(0, 8))
+
+        label = tk.Label(
+            title_row,
+            text=label_text,
+            font=("PingFang SC", 12, "bold"),
+            bg=self.colors['bg_card'],
+            fg=self.colors['text_primary'],
+            anchor="w"
+        )
+        label.pack(side=tk.LEFT)
+
+        desc = tk.Label(
+            title_row,
+            text=description,
+            font=("PingFang SC", 9),
+            bg=self.colors['bg_card'],
+            fg=self.colors['text_muted'],
+            anchor="w"
+        )
+        desc.pack(side=tk.LEFT, padx=(8, 0))
+
+        # 文件路径行
+        path_row = tk.Frame(inner, bg=self.colors['bg_card'])
+        path_row.pack(fill=tk.X)
+
+        entry = tk.Entry(
+            path_row,
+            textvariable=var,
+            font=("Monaco", 10),
+            bg=self.colors['bg_secondary'],
+            fg=self.colors['text_primary'],
+            insertbackground=self.colors['accent'],
+            relief=tk.FLAT,
+            borderwidth=0,
+            highlightthickness=1,
+            highlightbackground=self.colors['border'],
+            highlightcolor=self.colors['accent']
+        )
+        entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=6, padx=(0, 10))
+
+        btn = tk.Button(
+            path_row,
+            text="选择文件",
+            command=command,
+            bg=color,
+            fg="white",
+            font=("PingFang SC", 10, "bold"),
+            activebackground=hover_color,
+            activeforeground="white",
+            relief=tk.FLAT,
+            cursor="hand2",
+            padx=15,
+            pady=6,
+            borderwidth=0
+        )
+        btn.pack(side=tk.LEFT)
+
+        # 按钮悬停效果
+        btn.bind("<Enter>", lambda e: btn.config(bg=hover_color) if btn['state'] == 'normal' else None)
+        btn.bind("<Leave>", lambda e: btn.config(bg=color) if btn['state'] == 'normal' else None)
+
+        return btn
 
     def select_co2(self):
         filename = filedialog.askopenfilename(
@@ -429,6 +652,13 @@ class AllanVarianceApp:
         )
         if filename:
             self.co2_path.set(filename)
+            # 禁用按钮
+            self.co2_btn.config(
+                state=tk.DISABLED,
+                bg=self.colors['text_muted'],
+                cursor="arrow",
+                text="已选择"
+            )
 
     def select_ch4(self):
         filename = filedialog.askopenfilename(
@@ -437,27 +667,99 @@ class AllanVarianceApp:
         )
         if filename:
             self.ch4_path.set(filename)
+            # 禁用按钮
+            self.ch4_btn.config(
+                state=tk.DISABLED,
+                bg=self.colors['text_muted'],
+                cursor="arrow",
+                text="已选择"
+            )
 
     def start_analysis(self):
         co2_file = self.co2_path.get()
         ch4_file = self.ch4_path.get()
 
         if not co2_file and not ch4_file:
-            messagebox.showwarning("警告", "请至少选择一个气体的数据文件")
+            self.show_warning("请至少选择一个气体的数据文件")
             return
 
-        # 禁用按钮，显示进度条
-        self.start_btn.config(state=tk.DISABLED)
-        self.progress.pack(before=self.status_label)
-        self.progress.start()
-        self.status_label.config(text="正在处理，请稍候...")
+        # 计算总步骤数
+        self.step_names = []
+        if co2_file:
+            self.step_names.append("读取 CO2 数据")
+            self.step_names.append("计算 CO2 艾伦方差")
+        if ch4_file:
+            self.step_names.append("读取 CH4 数据")
+            self.step_names.append("计算 CH4 艾伦方差")
+        self.step_names.extend(["生成图表", "写入 Excel 文件"])
+
+        self.total_steps = len(self.step_names)
+        self.current_step = 0
+
+        # 禁用按钮，显示进度区域
+        self.start_btn.config(state=tk.DISABLED, bg=self.colors['border'])
+        self.progress_container.pack(pady=(20, 0))
+        self.start_loading_animation()
 
         # 在新线程中执行分析
         thread = threading.Thread(
             target=self.run_analysis,
-            args=(co2_file, ch4_file)
+            args=(co2_file, ch4_file),
+            daemon=True
         )
         thread.start()
+
+    def start_loading_animation(self):
+        """启动 loading 动画"""
+        self.loading_angle = 0
+        self.animate_loading()
+
+    def animate_loading(self):
+        """绘制旋转的 loading 动画"""
+        if self.loading_canvas is None:
+            return
+
+        self.loading_canvas.delete("all")
+
+        # 绘制多个旋转的圆点
+        center_x, center_y = 40, 40
+        radius = 25
+        num_dots = 8
+
+        for i in range(num_dots):
+            angle = (self.loading_angle + i * 360 / num_dots) % 360
+            radian = angle * 3.14159 / 180
+
+            x = center_x + radius * np.cos(radian)
+            y = center_y + radius * np.sin(radian)
+
+            # 根据位置计算透明度（通过颜色深浅模拟）
+            opacity = 1.0 - (i / num_dots) * 0.7
+
+            # 使用不同大小和颜色深浅
+            dot_size = 4 + 2 * opacity
+
+            # 将 RGB 颜色转换为 hex
+            color_value = int(56 + (255 - 56) * (1 - opacity))  # 从浅到深
+            color = f'#{color_value:02x}{189 + int((255 - 189) * (1 - opacity)):02x}{248:02x}'
+
+            self.loading_canvas.create_oval(
+                x - dot_size, y - dot_size,
+                x + dot_size, y + dot_size,
+                fill=color,
+                outline=""
+            )
+
+        self.loading_angle = (self.loading_angle + 15) % 360
+        self.loading_animation_id = self.root.after(50, self.animate_loading)
+
+    def stop_loading_animation(self):
+        """停止 loading 动画"""
+        if self.loading_animation_id is not None:
+            self.root.after_cancel(self.loading_animation_id)
+            self.loading_animation_id = None
+        if self.loading_canvas is not None:
+            self.loading_canvas.delete("all")
 
     def run_analysis(self, co2_file, ch4_file):
         try:
@@ -465,15 +767,27 @@ class AllanVarianceApp:
 
             # 处理 CO2
             if co2_file:
-                self.update_status("正在处理 CO2 数据...")
-                result = process_gas(co2_file, "CO2")
+                self.update_progress("读取 CO2 数据文件...")
+                df_co2 = load_raw(co2_file)
+                if df_co2 is None:
+                    self.show_error("无法读取 CO2 数据文件")
+                    return
+
+                self.update_progress("计算 CO2 艾伦方差...")
+                result = compute_allan(df_co2, "CO2")
                 if result:
                     results.append(result)
 
             # 处理 CH4
             if ch4_file:
-                self.update_status("正在处理 CH4 数据...")
-                result = process_gas(ch4_file, "CH4")
+                self.update_progress("读取 CH4 数据文件...")
+                df_ch4 = load_raw(ch4_file)
+                if df_ch4 is None:
+                    self.show_error("无法读取 CH4 数据文件")
+                    return
+
+                self.update_progress("计算 CH4 艾伦方差...")
+                result = compute_allan(df_ch4, "CH4")
                 if result:
                     results.append(result)
 
@@ -482,37 +796,87 @@ class AllanVarianceApp:
                 return
 
             # 生成输出文件
-            self.update_status("正在生成报告...")
+            self.update_progress("生成分析图表...")
             desktop = get_desktop_path()
             timestamp = int(time.time())
             output_file = desktop / f"艾伦方差分析结果_{timestamp}.xlsx"
 
+            self.update_progress("写入 Excel 文件...")
             png_path = write_excel(results, output_file)
 
             self.show_success(f"分析完成！\n\n结果已保存到桌面:\n{output_file.name}")
 
         except Exception as e:
+            import traceback
+            error_detail = traceback.format_exc()
+            print(f"错误详情:\n{error_detail}")
             self.show_error(f"处理过程中出错:\n{str(e)}")
         finally:
             self.reset_ui()
 
-    def update_status(self, message):
-        self.root.after(0, lambda: self.status_label.config(text=message))
+    def update_progress(self, message):
+        """更新进度和状态文本"""
+        self.current_step += 1
+
+        def update():
+            self.progress_text.config(
+                text=f"步骤 {self.current_step}/{self.total_steps}",
+                fg=self.colors['accent']
+            )
+            self.status_label.config(
+                text=message,
+                fg=self.colors['text_secondary']
+            )
+
+        self.root.after(0, update)
+        time.sleep(0.3)  # 让用户能看到进度变化
 
     def show_success(self, message):
-        self.root.after(0, lambda: messagebox.showinfo("成功", message))
+        def show():
+            self.stop_loading_animation()
+            self.status_label.config(
+                text="✓ " + message.split('\n')[0],
+                fg=self.colors['success']
+            )
+            messagebox.showinfo("成功", message)
+        self.root.after(0, show)
 
     def show_error(self, message):
-        self.root.after(0, lambda: messagebox.showerror("错误", message))
+        def show():
+            self.stop_loading_animation()
+            self.status_label.config(
+                text="✗ " + message.split('\n')[0],
+                fg=self.colors['error']
+            )
+            messagebox.showerror("错误", message)
+        self.root.after(0, show)
+
+    def show_warning(self, message):
+        messagebox.showwarning("警告", message)
 
     def reset_ui(self):
         self.root.after(0, self._reset_ui_impl)
 
     def _reset_ui_impl(self):
-        self.progress.stop()
-        self.progress.pack_forget()
-        self.start_btn.config(state=tk.NORMAL)
-        self.status_label.config(text="")
+        self.stop_loading_animation()
+        self.progress_container.pack_forget()
+        self.start_btn.config(state=tk.NORMAL, bg=self.colors['accent'])
+        # 重新启用文件选择按钮
+        if self.co2_path.get():
+            self.co2_btn.config(
+                state=tk.NORMAL,
+                bg=self.colors['co2_color'],
+                cursor="hand2",
+                text="选择文件"
+            )
+        if self.ch4_path.get():
+            self.ch4_btn.config(
+                state=tk.NORMAL,
+                bg=self.colors['ch4_color'],
+                cursor="hand2",
+                text="选择文件"
+            )
+        # 保留状态信息，不清空
 
 
 def main():

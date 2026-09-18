@@ -1,0 +1,146 @@
+=====================================
+🎉 艾伦方差分析工具 - 快速开始
+=====================================
+
+📍 项目已成功创建到您的桌面！
+   位置: ~/Desktop/allan_variance_tool
+
+=====================================
+🚀 第一步：测试运行
+=====================================
+
+【macOS 用户】
+打开终端，执行以下命令：
+
+1. 进入项目目录：
+   cd ~/Desktop/allan_variance_tool
+
+2. 创建虚拟环境：
+   python3 -m venv venv
+   source venv/bin/activate
+
+3. 安装依赖：
+   pip install -r requirements.txt
+
+4. 运行程序：
+   python allan_variance_gui.py
+
+【Windows 用户】
+打开命令提示符（CMD），执行以下命令：
+
+1. 进入项目目录：
+   cd %USERPROFILE%\Desktop\allan_variance_tool
+
+2. 创建虚拟环境：
+   python -m venv venv
+   venv\Scripts\activate
+
+3. 安装依赖：
+   pip install -r requirements.txt
+
+4. 运行程序：
+   python allan_variance_gui.py
+
+=====================================
+📦 第二步：打包成应用
+=====================================
+
+【macOS 打包】
+在项目目录下执行：
+   ./build_mac_complete.sh
+
+生成文件：
+   ✅ dist/艾伦方差分析工具.app
+   ✅ dist/艾伦方差分析工具_v1.0.0.dmg
+
+分发 DMG 文件给用户即可！
+
+【Windows 打包】
+方式一（推荐）- 安装程序：
+   build_windows_complete.bat
+   
+   生成: dist\艾伦方差分析工具_v1.0.0_Setup.exe
+   （需要先安装 Inno Setup）
+
+方式二 - 便携版：
+   build_windows_portable.bat
+   
+   生成: dist\艾伦方差分析工具_v1.0.0_便携版.zip
+
+=====================================
+📚 文档说明
+=====================================
+
+详细文档请查看：
+├─ README.md          # 完整文档
+├─ QUICKSTART.md      # 快速指南
+└─ PROJECT_STRUCTURE.txt  # 项目结构
+
+=====================================
+💡 使用提示
+=====================================
+
+✅ 数据格式要求：
+   - 文件类型：.txt 文本文件
+   - 分隔符：制表符（Tab）
+   - 两列：时间戳 + 浓度值
+   
+   示例：
+   2024-01-01 10:00:00	415.23
+   2024-01-01 10:00:03	415.25
+
+✅ 分析结果：
+   - 自动保存到桌面
+   - Excel 格式
+   - 包含原始数据、分析结果和图表
+
+✅ 支持的气体：
+   - CO2（二氧化碳）
+   - CH4（甲烷）
+   - 可单独或同时分析
+
+=====================================
+🔧 常用命令
+=====================================
+
+查看项目信息：
+   macOS:   ./project_info.sh
+   Windows: project_info.bat
+
+生成图标（可选）：
+   python create_icon.py your_icon.png
+
+清理构建文件：
+   rm -rf build dist venv  # macOS
+   rmdir /s build dist venv  # Windows
+
+=====================================
+⚠️ 常见问题
+=====================================
+
+Q: macOS 提示"无法打开应用"
+A: 执行命令：
+   xattr -cr /Applications/艾伦方差分析工具.app
+
+Q: Windows 提示 SmartScreen 拦截
+A: 点击"更多信息" → "仍要运行"
+
+Q: 打包后文件很大（80-150MB）
+A: 这是正常的，因为包含了所有依赖库
+
+Q: 缺少某个 Python 库
+A: 重新安装依赖：
+   pip install -r requirements.txt --force-reinstall
+
+=====================================
+✨ 下一步
+=====================================
+
+1. 准备测试数据文件（CO2 或 CH4）
+2. 运行程序进行测试
+3. 打包成应用程序
+4. 分发给用户使用
+
+祝您使用愉快！🎊
+
+=====================================
