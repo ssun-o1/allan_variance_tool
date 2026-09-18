@@ -1,0 +1,108 @@
+name: 打包多平台应用
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送 v* 标签时触发（如 v1.0.0）
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: 打包 Windows 应用
+        run: |
+          pyinstaller build_spec.py --clean --noconfirm
+
+      - name: 创建便携版压缩包
+        run: |
+          $version = "1.0.0"
+          $portableDir = "艾伦方差分析工具_v${version}_便携版"
+          New-Item -ItemType Directory -Path $portableDir
+          Copy-Item "dist\艾伦方差分析工具.exe" -Destination $portableDir
+          @"
+          艾伦方差分析工具 v${version} - 便携版
+
+          【使用方法】
+          1. 双击"艾伦方差分析工具.exe"启动程序
+          2. 选择 CO2 和/或 CH4 数据文件
+          3. 点击"开始分析"
+          4. 结果自动保存到桌面
+          "@ | Out-File -FilePath "$portableDir\使用说明.txt" -Encoding UTF8
+          Compress-Archive -Path $portableDir -DestinationPath "dist\艾伦方差分析工具_v${version}_Windows便携版.zip"
+
+      - name: 上传 Windows 构建产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-build
+          path: |
+            dist/*.exe
+            dist/*.zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: 打包 macOS 应用
+        run: |
+          pyinstaller build_spec.py --clean --noconfirm
+
+      - name: 创建 DMG
+        run: |
+          chmod +x create_dmg.sh
+          ./create_dmg.sh
+
+      - name: 上传 macOS 构建产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-build
+          path: |
+            dist/*.app
+            dist/*.dmg
+
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v3
+
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            windows-build/*.zip
+            windows-build/*.exe
+            macos-build/*.dmg
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
