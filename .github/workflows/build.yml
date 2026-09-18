@@ -40,8 +40,16 @@ jobs:
           【使用方法】
           1. 双击"艾伦方差分析工具.exe"启动程序
           2. 选择 CO2 和/或 CH4 数据文件
+            2.1 数据格式要求
+              a. 文件类型：.txt 文本文件
+              b. 分隔符：制表符（Tab）
+              c. 两列：时间戳 + 浓度值
+              示例：
+              2024-01-01 10:00:00	415.23
+              2024-01-01 10:00:03	415.25
           3. 点击"开始分析"
           4. 结果自动保存到桌面
+          
           "@ | Out-File -FilePath "$portableDir\使用说明.txt" -Encoding UTF8
           Compress-Archive -Path $portableDir -DestinationPath "dist\艾伦方差分析工具_v${version}_Windows便携版.zip"
 

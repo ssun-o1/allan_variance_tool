@@ -879,8 +879,104 @@ class AllanVarianceApp:
         # 保留状态信息，不清空
 
 
+def show_loading_window():
+    """显示加载窗口"""
+    loading_window = tk.Tk()
+    loading_window.title("正在启动...")
+    loading_window.overrideredirect(True)  # 无边框窗口
+
+    # 窗口大小和位置
+    window_width = 400
+    window_height = 200
+    screen_width = loading_window.winfo_screenwidth()
+    screen_height = loading_window.winfo_screenheight()
+    x = (screen_width - window_width) // 2
+    y = (screen_height - window_height) // 2
+    loading_window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    # 设置背景
+    loading_window.configure(bg='#0F131C')
+
+    # 主容器
+    container = tk.Frame(loading_window, bg='#0F131C')
+    container.pack(expand=True)
+
+    # 标题
+    title = tk.Label(
+        container,
+        text="艾伦方差分析工具",
+        font=("PingFang SC", 20, "bold"),
+        bg='#0F131C',
+        fg='#E8F5FE'
+    )
+    title.pack(pady=(20, 5))
+
+    # 副标题
+    subtitle = tk.Label(
+        container,
+        text="Allan Variance Analysis Tool",
+        font=("Arial", 11),
+        bg='#0F131C',
+        fg='#38BDF8'
+    )
+    subtitle.pack(pady=(0, 30))
+
+    # 加载提示
+    loading_label = tk.Label(
+        container,
+        text="正在加载，请稍候...",
+        font=("PingFang SC", 12),
+        bg='#0F131C',
+        fg='#6B7280'
+    )
+    loading_label.pack()
+
+    # 进度动画
+    progress_frame = tk.Frame(container, bg='#0F131C')
+    progress_frame.pack(pady=(15, 0))
+
+    dots = []
+    for i in range(3):
+        dot = tk.Label(
+            progress_frame,
+            text="●",
+            font=("Arial", 16),
+            bg='#0F131C',
+            fg='#38BDF8'
+        )
+        dot.pack(side=tk.LEFT, padx=5)
+        dots.append(dot)
+
+    # 动画效果
+    def animate_dots(index=0):
+        for i, dot in enumerate(dots):
+            if i == index:
+                dot.config(fg='#38BDF8')
+            else:
+                dot.config(fg='#1E2636')
+        loading_window.after(300, lambda: animate_dots((index + 1) % 3))
+
+    animate_dots()
+
+    loading_window.update()
+    return loading_window
+
+
 def main():
+    # 显示加载窗口
+    loading_window = show_loading_window()
+
+    # 模拟加载时间，让用户看到加载画面
+    loading_window.after(800, lambda: None)
+    loading_window.update()
+
+    # 创建主窗口
     root = tk.Tk()
+
+    # 关闭加载窗口
+    loading_window.destroy()
+
+    # 启动应用
     app = AllanVarianceApp(root)
     root.mainloop()
 
