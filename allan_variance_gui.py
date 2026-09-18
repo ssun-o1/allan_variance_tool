@@ -948,33 +948,47 @@ def show_loading_window():
         dots.append(dot)
 
     # 动画效果
+    animation_running = [True]  # 使用列表来避免闭包问题
+
     def animate_dots(index=0):
+        if not animation_running[0]:
+            return
         for i, dot in enumerate(dots):
-            if i == index:
-                dot.config(fg='#38BDF8')
-            else:
-                dot.config(fg='#1E2636')
+            try:
+                if i == index:
+                    dot.config(fg='#38BDF8')
+                else:
+                    dot.config(fg='#1E2636')
+            except:
+                return
         loading_window.after(300, lambda: animate_dots((index + 1) % 3))
 
     animate_dots()
-
     loading_window.update()
-    return loading_window
+
+    # 返回窗口和动画控制
+    return loading_window, animation_running
 
 
 def main():
     # 显示加载窗口
-    loading_window = show_loading_window()
+    loading_window, animation_running = show_loading_window()
 
-    # 模拟加载时间，让用户看到加载画面
-    loading_window.after(800, lambda: None)
-    loading_window.update()
+    # 给用户足够时间看到加载画面
+    for _ in range(3):
+        loading_window.update()
+        import time
+        time.sleep(0.3)
+
+    # 停止动画
+    animation_running[0] = False
+
+    # 销毁加载窗口
+    loading_window.quit()
+    loading_window.destroy()
 
     # 创建主窗口
     root = tk.Tk()
-
-    # 关闭加载窗口
-    loading_window.destroy()
 
     # 启动应用
     app = AllanVarianceApp(root)
