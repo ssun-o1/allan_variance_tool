@@ -26,7 +26,7 @@ jobs:
 
       - name: 打包 Windows 应用
         run: |
-          pyinstaller build_spec.py --clean --noconfirm
+          pyinstaller build_spec.spec --clean --noconfirm
 
       - name: 创建便携版压缩包
         run: |
@@ -72,7 +72,7 @@ jobs:
 
       - name: 打包 macOS 应用
         run: |
-          pyinstaller build_spec.py --clean --noconfirm
+          pyinstaller build_spec.spec --clean --noconfirm
 
       - name: 创建 DMG
         run: |
